@@ -682,7 +682,6 @@ export default function App() {
 
   return (
     <div style={S.app}>
-      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div style={S.wrap}>
         <header style={{ textAlign: "center", padding: "2px 0 4px" }}>
           <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.5 }}>🔥 GRIND</div>
