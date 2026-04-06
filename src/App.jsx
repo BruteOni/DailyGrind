@@ -110,8 +110,8 @@ const EMPTY = { cycles: 0, pushUps: 0, squats: 0, sitUps: 0, marchSeconds: 0 };
 function useStats() {
   const [data, setData] = useState({});
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { (async () => { try { const r = await window.storage.get("grind-v4"); if (r?.value) setData(JSON.parse(r.value)); } catch (e) {} setLoaded(true); })(); }, []);
-  const save = useCallback(async (d) => { try { await window.storage.set("grind-v4", JSON.stringify(d)); } catch (e) {} }, []);
+  useEffect(() => { try { const r = localStorage.getItem("grind-v4"); if (r) setData(JSON.parse(r)); } catch (e) {} setLoaded(true); }, []);
+  const save = useCallback((d) => { try { localStorage.setItem("grind-v4", JSON.stringify(d)); } catch (e) {} }, []);
 
   const addExerciseStats = useCallback((statKey, amount) => {
     if (!statKey || !amount) return;
@@ -144,8 +144,8 @@ function useStats() {
 function useExercises() {
   const [ex, setEx] = useState(DEFAULT_EXERCISES);
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { (async () => { try { const r = await window.storage.get("grind-exercises-v4"); if (r?.value) setEx(JSON.parse(r.value)); } catch (e) {} setLoaded(true); })(); }, []);
-  const save = useCallback(async (e) => { try { await window.storage.set("grind-exercises-v4", JSON.stringify(e)); } catch (e2) {} }, []);
+  useEffect(() => { try { const r = localStorage.getItem("grind-exercises-v4"); if (r) setEx(JSON.parse(r)); } catch (e) {} setLoaded(true); }, []);
+  const save = useCallback((e) => { try { localStorage.setItem("grind-exercises-v4", JSON.stringify(e)); } catch (e2) {} }, []);
   const update = useCallback((newEx) => { setEx(newEx); save(newEx); }, [save]);
   return { exercises: ex, updateExercises: update, loaded };
 }
@@ -153,8 +153,8 @@ function useExercises() {
 function useFastConfig() {
   const [cfg, setCfg] = useState({ startHour: 22, startMin: 0, endHour: 11, endMin: 0 });
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { (async () => { try { const r = await window.storage.get("grind-fast-cfg-v4"); if (r?.value) setCfg(JSON.parse(r.value)); } catch (e) {} setLoaded(true); })(); }, []);
-  const save = useCallback(async (c) => { try { await window.storage.set("grind-fast-cfg-v4", JSON.stringify(c)); } catch (e) {} }, []);
+  useEffect(() => { try { const r = localStorage.getItem("grind-fast-cfg-v4"); if (r) setCfg(JSON.parse(r)); } catch (e) {} setLoaded(true); }, []);
+  const save = useCallback((c) => { try { localStorage.setItem("grind-fast-cfg-v4", JSON.stringify(c)); } catch (e) {} }, []);
   const update = useCallback((c) => { setCfg(c); save(c); }, [save]);
   return { cfg, update, loaded };
 }
