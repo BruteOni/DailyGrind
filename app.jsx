@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // ═══════════════════════════════════════════
 // DEFAULTS
@@ -669,7 +669,7 @@ function TipBar() {
 // ═══════════════════════════════════════════
 // APP
 // ═══════════════════════════════════════════
-export default function App() {
+function App() {
   const stats = useStats();
   const { exercises, updateExercises, loaded: exLoaded } = useExercises();
   const { cfg, update: updateCfg, loaded: cfgLoaded } = useFastConfig();
@@ -716,3 +716,5 @@ const S = {
   timeInput: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "7px 10px", color: "#fff", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: "none", flex: 1 },
   fieldLabel: { fontSize: 9, color: "rgba(255,255,255,0.25)", letterSpacing: 1, marginBottom: 3, textTransform: "uppercase" },
 };
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
