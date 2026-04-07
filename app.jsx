@@ -302,6 +302,7 @@ function DailyGoal({ cycles }) {
           ))}
         </div>
       </div>
+      <div style={{ marginTop: 12 }}><TipBar /></div>
     </div>
   );
 }
@@ -368,6 +369,9 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
   const [confirmTimer, setConfirmTimer] = useState(CONFIRM_SECONDS);
   const [editVal, setEditVal] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [confirmDuration, setConfirmDuration] = useState(CONFIRM_SECONDS);
+  const [editingDuration, setEditingDuration] = useState(false);
+  const [draftDuration, setDraftDuration] = useState(CONFIRM_SECONDS);
   const iRef = useRef(null);
   const snd = useSound();
 
@@ -400,11 +404,11 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
 
   const enterConfirm = useCallback(() => {
     clr();
-    setConfirmTimer(CONFIRM_SECONDS);
+    setConfirmTimer(confirmDuration);
     setShowEdit(false);
     setEditVal(step?.reps ?? step?.duration ?? 0);
     setPhase("confirm");
-  }, [step]);
+  }, [step, confirmDuration]);
 
   // 3-2-1 countdown
   useEffect(() => {
@@ -438,7 +442,7 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
   // Confirm timer
   useEffect(() => {
     if (phase !== "confirm") return; clr();
-    let c = CONFIRM_SECONDS;
+    let c = confirmDuration;
     iRef.current = setInterval(() => {
       c--;
       snd("auto_tick");
@@ -446,7 +450,7 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
       else setConfirmTimer(c);
     }, 1000);
     return clr;
-  }, [phase === "confirm"]);
+  }, [phase, confirmDuration]);
 
   // Rep exercises → confirm
   useEffect(() => {
@@ -489,7 +493,8 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
         <span style={S.pt}>Workout</span>
         <button onClick={() => setPhase("config")} style={S.editBtn}>Edit</button>
       </div>
-      <div style={{ padding: "2px 0 12px" }}>
+      <button onClick={start} style={{ ...S.btn, marginBottom: 12 }}>▶ Start Workout</button>
+      <div style={{ padding: "2px 0 0" }}>
         {steps.map((s, i) => (
           <div key={s.id + i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0",
             borderBottom: i < steps.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
@@ -499,7 +504,6 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
           </div>
         ))}
       </div>
-      <button onClick={start} style={S.btn}>▶ Start Workout</button>
     </div>
   );
 
@@ -520,7 +524,14 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
 
   // ── CONFIRM / EDIT ──
   if (phase === "confirm") {
-    const pct = confirmTimer / CONFIRM_SECONDS;
+    const pct = confirmTimer / confirmDuration;
+    const saveNewDuration = () => {
+      const parsed = parseInt(draftDuration, 10);
+      const newDur = Math.max(5, isNaN(parsed) ? CONFIRM_SECONDS : parsed);
+      setConfirmDuration(newDur);
+      setConfirmTimer(newDur);
+      setEditingDuration(false);
+    };
     return (
       <div style={S.panel}>
         <div style={S.ph}>
@@ -529,7 +540,24 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
             <div style={{ width: 50, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
               <div style={{ width: `${pct * 100}%`, height: "100%", background: confirmTimer <= 4 ? "#EF4444" : "#F59E0B", transition: "width 0.3s", borderRadius: 2 }} />
             </div>
-            <span style={{ ...S.m, fontSize: 13, color: confirmTimer <= 4 ? "#EF4444" : "#F59E0B" }}>{confirmTimer}s</span>
+            {editingDuration ? (
+              <input
+                type="number"
+                value={draftDuration}
+                onChange={e => setDraftDuration(e.target.value)}
+                onBlur={saveNewDuration}
+                onKeyDown={e => { if (e.key === "Enter") saveNewDuration(); if (e.key === "Escape") { setDraftDuration(confirmDuration); setEditingDuration(false); } }}
+                style={{ ...S.m, fontSize: 13, width: 44, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 4, color: "#F59E0B", outline: "none", textAlign: "center", padding: "1px 3px" }}
+                autoFocus
+                min={5}
+              />
+            ) : (
+              <span
+                onClick={() => { setDraftDuration(confirmDuration); setEditingDuration(true); }}
+                style={{ ...S.m, fontSize: 13, color: confirmTimer <= 4 ? "#EF4444" : "#F59E0B", cursor: "pointer", textDecoration: "underline dotted" }}
+                title="Click to edit duration"
+              >{confirmTimer}s</span>
+            )}
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "6px 0" }}>
@@ -561,6 +589,7 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
   // ── ACTIVE / PAUSED ──
   const rc = step.type === "rest" ? "#818CF8" : "#F59E0B";
   const rp = timed && step.duration ? (step.duration - timer) / step.duration : 0;
+  const nextStep = steps[si + 1];
   return (
     <div style={S.panel}>
       <div style={S.ph}><span style={S.pt}>Workout</span><span style={{ ...S.m, fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{si + 1}/{steps.length}</span></div>
@@ -576,9 +605,18 @@ function WorkoutPanel({ exercises, stats, onEditExercises }) {
         </Ring>
         <span style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginTop: 10 }}>{step.name}</span>
         <Tag label={step.type === "rest" ? "REST" : "WORK"} color={rc} />
+        {step.type === "rest" && nextStep && (
+          <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: 1, textTransform: "uppercase" }}>Up next</span>
+            <span style={{ fontSize: 14 }}>{nextStep.icon}</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>{nextStep.name}</span>
+            <span style={{ ...S.m, fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{nextStep.reps ? `×${nextStep.reps}` : `${nextStep.duration}s`}</span>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 8, marginTop: 14, width: "100%" }}>
           {phase === "active" && <button onClick={pause} style={{ ...S.btn2, flex: 1 }}>⏸ Pause</button>}
           {phase === "paused" && <button onClick={resume} style={{ ...S.btn, flex: 1 }}>▶ Resume</button>}
+          {step.type === "rest" && <button onClick={goToNext} style={{ ...S.btn, flex: 1 }}>⏭ Skip Rest</button>}
           <button onClick={stop} style={{ ...S.ghost, flex: 0, marginTop: 0, padding: "10px 14px" }}>⏹</button>
         </div>
       </div>
@@ -692,7 +730,6 @@ function App() {
         <DailyGoal cycles={stats.today.cycles} />
         <WorkoutPanel exercises={exercises} stats={stats} onEditExercises={updateExercises} />
         <AllStats stats={stats} exercises={exercises} />
-        <TipBar />
       </div>
       <style>{`*{box-sizing:border-box;margin:0}button:active{transform:scale(0.97)}input[type=time]::-webkit-calendar-picker-indicator{filter:invert(0.6)}select,select option{background:#1a1a1c!important;color:#fff!important}select option:checked{background:#2a2a2e!important}`}</style>
     </div>
